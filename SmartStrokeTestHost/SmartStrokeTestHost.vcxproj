@@ -257,15 +257,15 @@
   </ItemGroup>
   <ItemGroup>
     <Library Include="imgui\OpenGL32.Lib" />
-    <Library Include="imgui\SDL\lib\x64\SDL2.lib" />
-    <Library Include="imgui\SDL\lib\x64\SDL2main.lib" />
-    <Library Include="imgui\SDL\lib\x64\SDL2test.lib" />
+    <Library Include="imgui\SDL\lib\SDL2.lib" />
+    <Library Include="imgui\SDL\lib\SDL2main.lib" />
+    <Library Include="imgui\SDL\lib\SDL2test.lib" />
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui\SDL\include\SDL_config.h.cmake" />
     <None Include="imgui\SDL\include\SDL_config.h.in" />
     <None Include="imgui\SDL\include\SDL_config_macosx.h.orig" />
-    <None Include="imgui\SDL\lib\x64\SDL2.dll" />
+    <None Include="imgui\SDL\lib\SDL2.dll" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

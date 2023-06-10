@@ -1,22 +1,8 @@
-#include <matplot/matplot.h>
-#include <set>
+#include <iostream>
 
 #include "serial.h"
 #include "imgui/imgui_demo.h"
 #include "imgui/implot.h"
-
-
-
-void matplotDemo() {
-    using namespace matplot;
-
-    std::set<std::vector<double>> Y = {
-        {16, 5, 9, 4}, {2, 11, 7, 14}, {3, 10, 6, 15}, {13, 8, 12, 1} };
-    plot(Y);
-
-    show();
-    return;
-}
 
 void serialConnectionTest() {
     std::cout << "Opening Serial Connection..." << std::endl;
@@ -113,7 +99,7 @@ int imguiDemo(int, char**) {// Setup SDL
     //IM_ASSERT(font != nullptr);
 
     // Our state
-    bool show_demo_window = true;
+    bool show_demo_window = false;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -213,18 +199,13 @@ int imguiDemo(int, char**) {// Setup SDL
 }
 
 enum class DEMO_TYPE: int {
-    GRAPH,
     DATA,
-    IMGUI,
-    IMPLOT
+    IMGUI
 };
 
 int main(int argn, char** argv) {
     DEMO_TYPE type = DEMO_TYPE::IMGUI;
     switch (type) {
-    case DEMO_TYPE::GRAPH:
-        matplotDemo();
-        break;
     case DEMO_TYPE::DATA:
         serialConnectionTest();
         break;

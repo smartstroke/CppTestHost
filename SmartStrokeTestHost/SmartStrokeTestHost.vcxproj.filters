@@ -373,20 +373,17 @@
     <Library Include="imgui\OpenGL32.Lib">
       <Filter>Source Files\imgui</Filter>
     </Library>
-    <Library Include="imgui\SDL\lib\x64\SDL2.lib">
+    <Library Include="imgui\SDL\lib\SDL2.lib">
       <Filter>Source Files\imgui\SDL</Filter>
     </Library>
-    <Library Include="imgui\SDL\lib\x64\SDL2main.lib">
+    <Library Include="imgui\SDL\lib\SDL2main.lib">
       <Filter>Source Files\imgui\SDL</Filter>
     </Library>
-    <Library Include="imgui\SDL\lib\x64\SDL2test.lib">
+    <Library Include="imgui\SDL\lib\SDL2test.lib">
       <Filter>Source Files\imgui\SDL</Filter>
     </Library>
   </ItemGroup>
   <ItemGroup>
-    <None Include="imgui\SDL\lib\x64\SDL2.dll">
-      <Filter>Source Files\imgui\SDL</Filter>
-    </None>
     <None Include="imgui\SDL\include\SDL_config.h.cmake">
       <Filter>Source Files\imgui\SDL\include</Filter>
     </None>
@@ -395,6 +392,9 @@
     </None>
     <None Include="imgui\SDL\include\SDL_config_macosx.h.orig">
       <Filter>Source Files\imgui\SDL\include</Filter>
+    </None>
+    <None Include="imgui\SDL\lib\SDL2.dll">
+      <Filter>Source Files\imgui\SDL</Filter>
     </None>
   </ItemGroup>
 </Project>
