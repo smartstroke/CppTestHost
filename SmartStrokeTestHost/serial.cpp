@@ -1,8 +1,12 @@
 #include "serial.h"
 
 #include <iostream>
+#include <sstream>
 
 #define BUFFER_SIZE 255
+
+SerialHandler::SerialHandler() {
+}
 
 SerialHandler::SerialHandler(const wchar_t* portNum) {
 	wchar_t portName[16] = {};
@@ -70,14 +74,14 @@ void SerialHandler::flush() {
 	} while (dwBytesRead);
 }
 
-char* SerialHandler::read() {
+std::string SerialHandler::read() {
 	char szBuff[BUFFER_SIZE + 1] = { 0 };
 	DWORD dwBytesRead = 0;
 	if (!ReadFile(serialHandle, szBuff, BUFFER_SIZE, &dwBytesRead, NULL)) {
 		//error occurred. Report to user.
 		_printError();
 	}
-	return szBuff;
+	return std::string(szBuff);
 }
 
 size_t SerialHandler::write(std::string bufferToSend) {
@@ -101,6 +105,22 @@ size_t SerialHandler::request() {
 		_printError();
 	}
 	return (size_t)dwBytesWritten;
+}
+
+SerialPacket SerialHandler::getData() {
+	SerialPacket parsedPacket;
+	if (serialHandle == nullptr) {
+		return parsedPacket;
+	}
+	request();
+	std::istringstream(read()) 
+		>> parsedPacket.timeRaw 
+		>> parsedPacket.fsrOne 
+		>> parsedPacket.fsrTwo 
+		>> parsedPacket.timeSec 
+		>> parsedPacket.timeMs;
+
+	return parsedPacket;
 }
 
 void SerialHandler::_printError() {

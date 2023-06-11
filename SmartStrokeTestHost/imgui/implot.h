@@ -47,6 +47,9 @@
 #pragma once
 #include "imgui.h"
 
+#include "../serial.h"
+#include <memory>
+
 //-----------------------------------------------------------------------------
 // [SECTION] Macros and Defines
 //-----------------------------------------------------------------------------
@@ -1232,7 +1235,7 @@ IMPLOT_API void ShowMetricsWindow(bool* p_popen = NULL);
 //-----------------------------------------------------------------------------
 
 // Shows the ImPlot demo window (add implot_demo.cpp to your sources!)
-IMPLOT_API void ShowDemoWindow(bool* p_open = NULL);
+IMPLOT_API void ShowDemoWindow(std::shared_ptr<SerialHandler> serialPtr = nullptr, bool* p_open = NULL);
 
 }  // namespace ImPlot
 

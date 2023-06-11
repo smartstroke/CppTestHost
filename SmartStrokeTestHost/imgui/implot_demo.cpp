@@ -875,6 +875,7 @@ void Demo_Images() {
 }
 
 //-----------------------------------------------------------------------------
+std::shared_ptr<SerialHandler> serialHandlerPtr;
 
 void Demo_RealtimePlots() {
     ImGui::BulletText("Move your mouse to change the data!");
@@ -882,12 +883,14 @@ void Demo_RealtimePlots() {
     static ScrollingBuffer sdata1, sdata2;
     static RollingBuffer   rdata1, rdata2;
     ImVec2 mouse = ImGui::GetMousePos();
+    SerialPacket data = serialHandlerPtr.get()->getData();
     static float t = 0;
-    t += ImGui::GetIO().DeltaTime;
-    sdata1.AddPoint(t, mouse.x * 0.0005f);
-    rdata1.AddPoint(t, mouse.x * 0.0005f);
-    sdata2.AddPoint(t, mouse.y * 0.0005f);
-    rdata2.AddPoint(t, mouse.y * 0.0005f);
+    t = (float)data.timeSec + (float)data.timeMs/1000.f;
+    float scale = 0.0002f;
+    sdata1.AddPoint(t, data.fsrOne * scale);
+    rdata1.AddPoint(t, data.fsrOne * scale);
+    sdata2.AddPoint(t, data.fsrTwo * scale);
+    rdata2.AddPoint(t, data.fsrTwo * scale);
 
     static float history = 10.0f;
     ImGui::SliderFloat("History",&history,1,30,"%.1f s");
@@ -901,16 +904,16 @@ void Demo_RealtimePlots() {
         ImPlot::SetupAxisLimits(ImAxis_X1,t - history, t, ImGuiCond_Always);
         ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
         ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL,0.5f);
-        ImPlot::PlotShaded("Mouse X", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, 0, sdata1.Offset, 2 * sizeof(float));
-        ImPlot::PlotLine("Mouse Y", &sdata2.Data[0].x, &sdata2.Data[0].y, sdata2.Data.size(), 0, sdata2.Offset, 2*sizeof(float));
+        ImPlot::PlotShaded("FSR One", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, 0, sdata1.Offset, 2 * sizeof(float));
+        ImPlot::PlotLine("FSR Two", &sdata2.Data[0].x, &sdata2.Data[0].y, sdata2.Data.size(), 0, sdata2.Offset, 2*sizeof(float));
         ImPlot::EndPlot();
     }
     if (ImPlot::BeginPlot("##Rolling", ImVec2(-1,150))) {
         ImPlot::SetupAxes(NULL, NULL, flags, flags);
         ImPlot::SetupAxisLimits(ImAxis_X1,0,history, ImGuiCond_Always);
         ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
-        ImPlot::PlotLine("Mouse X", &rdata1.Data[0].x, &rdata1.Data[0].y, rdata1.Data.size(), 0, 0, 2 * sizeof(float));
-        ImPlot::PlotLine("Mouse Y", &rdata2.Data[0].x, &rdata2.Data[0].y, rdata2.Data.size(), 0, 0, 2 * sizeof(float));
+        ImPlot::PlotLine("FSR One", &rdata1.Data[0].x, &rdata1.Data[0].y, rdata1.Data.size(), 0, 0, 2 * sizeof(float));
+        ImPlot::PlotLine("FSR Two", &rdata2.Data[0].x, &rdata2.Data[0].y, rdata2.Data.size(), 0, 0, 2 * sizeof(float));
         ImPlot::EndPlot();
     }
 }
@@ -2131,14 +2134,16 @@ void Demo_CustomPlottersAndTooltips()  {
 // DEMO WINDOW
 //-----------------------------------------------------------------------------
 
-void DemoHeader(const char* label, void(*demo)()) {
-    if (ImGui::TreeNodeEx(label)) {
+void DemoHeader(const char* label, void(*demo)(), ImGuiTreeNodeFlags flags = 0) {
+    if (ImGui::TreeNodeEx(label, flags)) {
         demo();
         ImGui::TreePop();
     }
 }
 
-void ShowDemoWindow(bool* p_open) {
+void ShowDemoWindow(std::shared_ptr<SerialHandler> serialPtr, bool* p_open) {
+    serialHandlerPtr = serialPtr;
+
     static bool show_implot_metrics      = false;
     static bool show_implot_style_editor = false;
     static bool show_imgui_metrics       = false;
@@ -2194,26 +2199,26 @@ void ShowDemoWindow(bool* p_open) {
 
     if (ImGui::BeginTabBar("ImPlotDemoTabs")) {
         if (ImGui::BeginTabItem("Plots")) {
-            DemoHeader("Line Plots", Demo_LinePlots);
-            DemoHeader("Filled Line Plots", Demo_FilledLinePlots);
-            DemoHeader("Shaded Plots##", Demo_ShadedPlots);
-            DemoHeader("Scatter Plots", Demo_ScatterPlots);
-            DemoHeader("Realtime Plots", Demo_RealtimePlots);
-            DemoHeader("Stairstep Plots", Demo_StairstepPlots);
-            DemoHeader("Bar Plots", Demo_BarPlots);
-            DemoHeader("Bar Groups", Demo_BarGroups);
-            DemoHeader("Bar Stacks", Demo_BarStacks);
-            DemoHeader("Error Bars", Demo_ErrorBars);
-            DemoHeader("Stem Plots##", Demo_StemPlots);
-            DemoHeader("Infinite Lines", Demo_InfiniteLines);
-            DemoHeader("Pie Charts", Demo_PieCharts);
-            DemoHeader("Heatmaps", Demo_Heatmaps);
-            DemoHeader("Histogram", Demo_Histogram);
-            DemoHeader("Histogram 2D", Demo_Histogram2D);
-            DemoHeader("Digital Plots", Demo_DigitalPlots);
-            DemoHeader("Images", Demo_Images);
-            DemoHeader("Markers and Text", Demo_MarkersAndText);
-            DemoHeader("NaN Values", Demo_NaNValues);
+            //DemoHeader("Line Plots", Demo_LinePlots);
+            //DemoHeader("Filled Line Plots", Demo_FilledLinePlots);
+            //DemoHeader("Shaded Plots##", Demo_ShadedPlots);
+            //DemoHeader("Scatter Plots", Demo_ScatterPlots);
+            DemoHeader("Realtime Plots", Demo_RealtimePlots, ImGuiTreeNodeFlags_DefaultOpen);
+            //DemoHeader("Stairstep Plots", Demo_StairstepPlots);
+            //DemoHeader("Bar Plots", Demo_BarPlots);
+            //DemoHeader("Bar Groups", Demo_BarGroups);
+            //DemoHeader("Bar Stacks", Demo_BarStacks);
+            //DemoHeader("Error Bars", Demo_ErrorBars);
+            //DemoHeader("Stem Plots##", Demo_StemPlots);
+            //DemoHeader("Infinite Lines", Demo_InfiniteLines);
+            //DemoHeader("Pie Charts", Demo_PieCharts);
+            //DemoHeader("Heatmaps", Demo_Heatmaps);
+            //DemoHeader("Histogram", Demo_Histogram);
+            //DemoHeader("Histogram 2D", Demo_Histogram2D);
+            //DemoHeader("Digital Plots", Demo_DigitalPlots);
+            //DemoHeader("Images", Demo_Images);
+            //DemoHeader("Markers and Text", Demo_MarkersAndText);
+            //DemoHeader("NaN Values", Demo_NaNValues);
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Subplots")) {

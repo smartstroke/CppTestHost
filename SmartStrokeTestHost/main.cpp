@@ -1,19 +1,20 @@
 #include <iostream>
+#include <memory>
 
 #include "serial.h"
 #include "imgui/imgui_demo.h"
 #include "imgui/implot.h"
 
+ std::shared_ptr<SerialHandler> serialHandlerPtr;
+
 void serialConnectionTest() {
-    std::cout << "Opening Serial Connection..." << std::endl;
-    SerialHandler serialHandler(L"10");
     std::cout << "Flushing port..." << std::endl;
-    serialHandler.flush();
+    serialHandlerPtr.get()->flush();
     std::cout << "Begin read loop..." << std::endl;
     int count = 0;
     while (count < 10) {
-        serialHandler.request();
-        std::cout << serialHandler.read();
+        serialHandlerPtr.get()->request();
+        std::cout << serialHandlerPtr.get()->read();
         count++;
     }
     std::cout << "Test complete..." << std::endl;
@@ -134,7 +135,7 @@ int imguiDemo(int, char**) {// Setup SDL
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
-        ImPlot::ShowDemoWindow();
+        ImPlot::ShowDemoWindow(serialHandlerPtr);
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
@@ -204,6 +205,7 @@ enum class DEMO_TYPE: int {
 };
 
 int main(int argn, char** argv) {
+    serialHandlerPtr = std::unique_ptr<SerialHandler>(new SerialHandler(L"10"));
     DEMO_TYPE type = DEMO_TYPE::IMGUI;
     switch (type) {
     case DEMO_TYPE::DATA:
