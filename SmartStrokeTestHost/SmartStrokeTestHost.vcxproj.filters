@@ -368,6 +368,9 @@
     <ClInclude Include="imgui\implot_internal.h">
       <Filter>Source Files\imgui</Filter>
     </ClInclude>
+    <ClInclude Include="packet.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="imgui\OpenGL32.Lib">
