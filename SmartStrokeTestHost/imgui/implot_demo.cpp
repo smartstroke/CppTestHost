@@ -133,10 +133,10 @@ struct ScrollingBuffer {
     ImVector<ImVec2> Data;
 
     int mLag = 0;
-    float mThreshold = 0.0;
-    float mInfluence = 0.0;
-    float mSumData = 0.0;
-    float mSumSqrs = 0.0;
+    float mThreshold = 0.0f;
+    float mInfluence = 0.0f;
+    float mSumData = 0.0f;
+    float mSumSqrs = 0.0f;
     ImVector<ImVec2> mSignals;
     ImVector<ImVec2> mFilteredInput;
     ImVector<ImVec2> mFilteredMean;
