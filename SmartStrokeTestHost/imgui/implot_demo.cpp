@@ -1024,7 +1024,7 @@ void Demo_Images() {
 std::shared_ptr<SerialHandler> serialHandlerPtr;
 
 void Demo_RealtimePlots() {
-    static ScrollingBuffer sdata1, sdata2;
+    static ScrollingBuffer sdata1, sdata2, sdataX, sdataY, sdataZ;
     static RollingBuffer   rdata1, rdata2;
     ImVec2 mouse = ImGui::GetMousePos();
     SerialPacket data = serialHandlerPtr.get()->getData();
@@ -1032,14 +1032,13 @@ void Demo_RealtimePlots() {
     t = (float)data.timeSec + (float)data.timeMs/1000.f;
     float scale = 0.0002f;
     sdata1.AddPoint(t, data.fsrOne * scale);
-    rdata1.AddPoint(t, data.fsrOne * scale);
     sdata2.AddPoint(t, data.fsrTwo * scale);
-    rdata2.AddPoint(t, data.fsrTwo * scale);
+    sdataX.AddPoint(t, data.fsrTwo * scale); // Update please
+    sdataY.AddPoint(t, data.fsrTwo * scale); // Update please
+    sdataZ.AddPoint(t, data.fsrTwo * scale); // Update please
 
     static float history = 10.0f;
     ImGui::SliderFloat("History",&history,1,30,"%.1f s");
-    rdata1.Span = history;
-    rdata2.Span = history;
 
     static int Lag = sdata1.mLag;
     ImGui::InputInt(" Lag", &sdata1.mLag);
@@ -1107,6 +1106,18 @@ void Demo_RealtimePlots() {
         ImPlot::PlotScatter("Strokes", &sdata1.mTrackedStrokes[0].x, &sdata1.mTrackedStrokes[0].y, sdata1.mTrackedStrokes.size(), 0, 0, 2 * sizeof(float));
         ImPlot::EndPlot();
     }
+
+    if (ImPlot::BeginPlot("IMU Raw Input", ImVec2(-1, 150))) {
+        ImPlot::SetupAxes(NULL, NULL, flags, flags);
+        ImPlot::SetupAxisLimits(ImAxis_X1, t - history, t, ImGuiCond_Always);
+        ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 1.5);
+        ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
+        ImPlot::PlotLine("X", &sdataX.Data[0].x, &sdataX.Data[0].y, sdataX.Data.size(), 0, sdataX.Offset, 2 * sizeof(float));
+        ImPlot::PlotLine("Y", &sdataY.Data[0].x, &sdataY.Data[0].y, sdataY.Data.size(), 0, sdataY.Offset, 2 * sizeof(float));
+        ImPlot::PlotLine("Y", &sdataZ.Data[0].x, &sdataZ.Data[0].y, sdataZ.Data.size(), 0, sdataZ.Offset, 2 * sizeof(float));
+        ImPlot::EndPlot();
+    }
+
     float delay = sdata1.mTrackedStrokes[0].x - sdata2.mTrackedStrokes[0].x;
     ImGui::Text("Delay: %.2f ms", delay);
 }
