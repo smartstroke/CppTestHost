@@ -33,6 +33,14 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
+#include <cmath>
+#include <iterator>
+#include <numeric>
+
 #ifdef _MSC_VER
 #define sprintf sprintf_s
 #endif
@@ -123,23 +131,111 @@ struct ScrollingBuffer {
     int MaxSize;
     int Offset;
     ImVector<ImVec2> Data;
-    ScrollingBuffer(int max_size = 2000) {
-        MaxSize = max_size;
-        Offset  = 0;
+
+    int mLag = 0;
+    long double mThreshold = 0.0;
+    long double mInfluence = 0.0;
+    long double mSumData = 0.0;
+    long double mSumSqrs = 0.0;
+    ImVector<ImVec2> mSignals;
+    ImVector<long double> mFilteredInput;
+    ImVector<long double> mFilteredMean;
+    ImVector<long double> mFilteredStdDev;
+
+    float minSig = 0.0f;
+    float midSig = 0.5f;
+    float maxSig = 1.0f;
+
+    ScrollingBuffer(int max_size = 2000, int lag = 50, long double threshold = 3.5, long double influence = 0.0) : 
+    MaxSize(max_size),
+    mLag(lag),
+    mThreshold(threshold),
+    mInfluence(influence)
+    {
+        Offset = 0;
         Data.reserve(MaxSize);
+        mSignals.reserve(MaxSize);
+        mFilteredInput.reserve(MaxSize);
+        mFilteredMean.reserve(MaxSize);
+        mFilteredStdDev.reserve(MaxSize);
     }
     void AddPoint(float x, float y) {
-        if (Data.size() < MaxSize)
-            Data.push_back(ImVec2(x,y));
+        if (Data.size() < MaxSize) {
+            Data.push_back(ImVec2(x, y));
+            mSignals.push_back(ImVec2(x, midSig));
+            mFilteredInput.push_back(0.0);
+            mFilteredMean.push_back(0.0);
+            mFilteredStdDev.push_back(0.0);
+        }
         else {
             Data[Offset] = ImVec2(x,y);
-            Offset =  (Offset + 1) % MaxSize;
+            mSignals[Offset] = ImVec2(x, midSig);
+            Offset = (Offset + 1) % MaxSize;
         }
+        Update(x, y);
     }
     void Erase() {
         if (Data.size() > 0) {
             Data.shrink(0);
-            Offset  = 0;
+            mSignals.shrink(0);
+            mFilteredInput.shrink(0);
+            mFilteredMean.shrink(0);
+            mFilteredStdDev.shrink(0);
+            Offset = 0;
+        }
+    }
+
+    void Update(float x, float y) {
+        int index = (Data.size() < MaxSize) ? (Data.size() - 1) : Offset;
+        // Initialization
+        if (Data.size() < mLag) {
+            mSumData += y;
+            mFilteredMean[index] = mSumData / Data.size();
+            mSumSqrs += y * y;
+            mFilteredStdDev[index] = std::sqrt(mSumSqrs / Data.size());
+
+            // Not enough data, so no signal if we're not ready yet?
+            mSignals[index] = ImVec2(x, midSig); // No signal, Entering/Exiting stroke
+            return;
+        }
+
+        int currentIndex = (Data.size() < MaxSize) ? (index - 1) : ((MaxSize + index - 1) % MaxSize);
+        int previousIndex = (Data.size() < MaxSize) ? (index - 2) : ((MaxSize + index - 2) % MaxSize);
+        int removedIndex = (Data.size() < MaxSize) ? (index - mLag) : ((MaxSize + index - mLag) % MaxSize);
+        // Enough data to begin, but Data not full
+        if (Data.size() < MaxSize) {
+            mSumData -= Data[removedIndex].y;
+            mSumData += y;
+            mFilteredMean[currentIndex] = mSumData / Data.size();
+
+            mSumSqrs -= Data[removedIndex].y * Data[removedIndex].y;
+            mSumSqrs += y * y;
+            mFilteredStdDev[currentIndex] = std::sqrt(mSumSqrs / Data.size());
+        }
+        // Regular case, Data full
+        else {
+            mSumSqrs -= Data[removedIndex].y;
+            mSumSqrs += y;
+            mFilteredMean[currentIndex] = mSumData / MaxSize;
+
+            mSumSqrs -= Data[removedIndex].y * Data[removedIndex].y;
+            mSumSqrs += y * y;
+            mFilteredStdDev[currentIndex] = std::sqrt(mSumSqrs / MaxSize);
+        }
+
+        // We have enough data
+        if (std::abs(y - mFilteredMean[previousIndex]) > mThreshold * mFilteredStdDev[previousIndex]) {
+            if (y > mFilteredMean[previousIndex]) {
+                mSignals[currentIndex] = ImVec2(x, maxSig); // Positive signal, Stroke peak
+            }
+            else {
+                mSignals[currentIndex] = ImVec2(x, minSig); // Negative signal, Recovery
+            }
+            mFilteredInput[currentIndex] = mInfluence * y + (1.0 - mInfluence) * mFilteredInput[previousIndex];
+        }
+        else {
+            mSignals[currentIndex] = ImVec2(x, midSig); // No signal, Entering/Exiting stroke
+            mFilteredInput[currentIndex] = y;
         }
     }
 };
@@ -888,9 +984,9 @@ void Demo_RealtimePlots() {
     t = (float)data.timeSec + (float)data.timeMs/1000.f;
     float scale = 0.0002f;
     sdata1.AddPoint(t, data.fsrOne * scale);
-    rdata1.AddPoint(t, data.fsrOne * scale);
+    //rdata1.AddPoint(t, data.fsrOne * scale);
     sdata2.AddPoint(t, data.fsrTwo * scale);
-    rdata2.AddPoint(t, data.fsrTwo * scale);
+    //rdata2.AddPoint(t, data.fsrTwo * scale);
 
     static float history = 10.0f;
     ImGui::SliderFloat("History",&history,1,30,"%.1f s");
@@ -899,7 +995,7 @@ void Demo_RealtimePlots() {
 
     static ImPlotAxisFlags flags = ImPlotAxisFlags_NoTickLabels;
 
-    if (ImPlot::BeginPlot("##Scrolling", ImVec2(-1,150))) {
+    if (ImPlot::BeginPlot("Raw Input", ImVec2(-1,150))) {
         ImPlot::SetupAxes(NULL, NULL, flags, flags);
         ImPlot::SetupAxisLimits(ImAxis_X1,t - history, t, ImGuiCond_Always);
         ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
@@ -908,12 +1004,21 @@ void Demo_RealtimePlots() {
         ImPlot::PlotLine("FSR Two", &sdata2.Data[0].x, &sdata2.Data[0].y, sdata2.Data.size(), 0, sdata2.Offset, 2*sizeof(float));
         ImPlot::EndPlot();
     }
-    if (ImPlot::BeginPlot("##Rolling", ImVec2(-1,150))) {
+    /*if (ImPlot::BeginPlot("##Rolling", ImVec2(-1,150))) {
         ImPlot::SetupAxes(NULL, NULL, flags, flags);
         ImPlot::SetupAxisLimits(ImAxis_X1,0,history, ImGuiCond_Always);
         ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
         ImPlot::PlotLine("FSR One", &rdata1.Data[0].x, &rdata1.Data[0].y, rdata1.Data.size(), 0, 0, 2 * sizeof(float));
         ImPlot::PlotLine("FSR Two", &rdata2.Data[0].x, &rdata2.Data[0].y, rdata2.Data.size(), 0, 0, 2 * sizeof(float));
+        ImPlot::EndPlot();
+    }*/
+    if (ImPlot::BeginPlot("Robust peak detection algorithm (using z-scores)", ImVec2(-1, 150))) {
+        ImPlot::SetupAxes(NULL, NULL, flags, flags);
+        ImPlot::SetupAxisLimits(ImAxis_X1, t - history, t, ImGuiCond_Always);
+        ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 1);
+        ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
+        ImPlot::PlotShaded("Raw FSR", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, 0, sdata1.Offset, 2 * sizeof(float));
+        ImPlot::PlotLine("Detected Signals", &sdata1.mSignals[0].x, &sdata1.mSignals[0].y, sdata1.Data.size(), 0, sdata1.Offset, 2 * sizeof(float));
         ImPlot::EndPlot();
     }
 }
