@@ -149,7 +149,7 @@ struct ScrollingBuffer {
     float midSig = 0.5f;
     float maxSig = 1.0f;
 
-    ScrollingBuffer(int max_size = 2000, int lag = 400, float threshold = 0.7f, float influence = 0.5f) :
+    ScrollingBuffer(int max_size = 2000, int lag = 50, float threshold = 0.7f, float influence = 0.5f) :
     MaxSize(max_size),
     mLag(lag),
     mThreshold(threshold),
@@ -163,6 +163,7 @@ struct ScrollingBuffer {
         mFilteredStdDev.reserve(MaxSize);
         mFilteredStdDevUp.reserve(MaxSize);
         mFilteredStdDevDwn.reserve(MaxSize);
+        mTrackedStrokes.reserve(100);
     }
     void AddPoint(float x, float y) {
         if (Data.size() < MaxSize) {
@@ -190,6 +191,7 @@ struct ScrollingBuffer {
             mFilteredStdDev.shrink(0);
             mFilteredStdDevUp.shrink(0);
             mFilteredStdDevDwn.shrink(0);
+            mTrackedStrokes.shrink(100);
             Offset = 0;
         }
     }
@@ -251,6 +253,39 @@ struct ScrollingBuffer {
         else {
             mSignals[currentIndex] = ImVec2(x, midSig); // No signal, Entering/Exiting stroke
             mFilteredInput[currentIndex] = ImVec2(x, y);
+        }
+
+        float currentValue = mSignals[currentIndex].y;
+        float prevValue = mSignals[previousIndex].y;
+        bool isFallingEdge = (currentValue == midSig) && (prevValue != midSig);
+        if (isFallingEdge) {
+            int fallingEdgeIndex = previousIndex;
+            int risingEdgeIndex = 0;
+            int indexToCheck = previousIndex;
+            int lastIndexChecked = previousIndex;
+            bool foundRisingEdge = false;
+            while (!foundRisingEdge) {
+                lastIndexChecked = indexToCheck;
+                if (indexToCheck == 0) {
+                    indexToCheck = MaxSize - 1;
+                }
+                else {
+                    indexToCheck--;
+                }
+
+                foundRisingEdge = (mSignals[lastIndexChecked].y == prevValue) && (mSignals[indexToCheck].y == midSig);
+                if (foundRisingEdge) {
+                    risingEdgeIndex = lastIndexChecked;
+                }
+            }
+
+            float risingEdgeTime = mSignals[risingEdgeIndex].x;
+            float fallingEdgeTime = mSignals[fallingEdgeIndex].x;
+            float strokeCenterTime = (risingEdgeTime + fallingEdgeTime)/2;
+            if (mTrackedStrokes.size() == 100) {
+                mTrackedStrokes.pop_back();
+            }
+            mTrackedStrokes.push_back(ImVec2(strokeCenterTime, prevValue));
         }
     }
 };
@@ -1069,8 +1104,11 @@ void Demo_RealtimePlots() {
         ImPlot::PlotLine("Mean", &sdata1.mFilteredMean[0].x, &sdata1.mFilteredMean[0].y, sdata1.Data.size(), 0, sdata1.Offset, 2 * sizeof(float));
         ImPlot::PlotLine("Upper Bound", &sdata1.mFilteredStdDevUp[0].x, &sdata1.mFilteredStdDevUp[0].y, sdata1.Data.size(), 0, sdata1.Offset, 2 * sizeof(float));
         ImPlot::PlotLine("Lower Bound", &sdata1.mFilteredStdDevDwn[0].x, &sdata1.mFilteredStdDevDwn[0].y, sdata1.Data.size(), 0, sdata1.Offset, 2 * sizeof(float));
+        ImPlot::PlotScatter("Strokes", &sdata1.mTrackedStrokes[0].x, &sdata1.mTrackedStrokes[0].y, sdata1.mTrackedStrokes.size(), 0, 0, 2 * sizeof(float));
         ImPlot::EndPlot();
     }
+    float delay = sdata1.mTrackedStrokes[0].x - sdata2.mTrackedStrokes[0].x;
+    ImGui::Text("Delay: %.2f ms", delay);
 }
 
 //-----------------------------------------------------------------------------
