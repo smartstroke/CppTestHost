@@ -285,7 +285,7 @@ struct ScrollingBuffer {
             if (mTrackedStrokes.size() == 100) {
                 mTrackedStrokes.pop_back();
             }
-            mTrackedStrokes.push_back(ImVec2(strokeCenterTime, prevValue));
+            mTrackedStrokes.push_front(ImVec2(strokeCenterTime, prevValue));
         }
     }
 };
