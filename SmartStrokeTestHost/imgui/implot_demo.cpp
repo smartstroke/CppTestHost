@@ -1061,13 +1061,13 @@ void Demo_RealtimePlots() {
     if (clicked)
     {
         if (e == 0) {
-            sdata1.mThreshold = 0.01;
-            sdata1.mInfluence = 3.5;
+            sdata1.mThreshold = 0.01f;
+            sdata1.mInfluence = 3.5f;
             sdata1.mLag = 45;
         }
         if (e == 1) {
-            sdata1.mThreshold = 0.0275;
-            sdata1.mInfluence = 2.75;
+            sdata1.mThreshold = 0.0275f;
+            sdata1.mInfluence = 2.75f;
             sdata1.mLag = 225;
         }
         clicked = false;
