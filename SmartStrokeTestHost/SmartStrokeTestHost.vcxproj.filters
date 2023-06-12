@@ -399,5 +399,8 @@
     <None Include="imgui\SDL\lib\SDL2.dll">
       <Filter>Source Files\imgui\SDL</Filter>
     </None>
+    <None Include="imgui.ini">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
