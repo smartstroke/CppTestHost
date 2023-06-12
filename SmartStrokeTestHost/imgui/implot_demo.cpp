@@ -246,7 +246,7 @@ struct ScrollingBuffer {
             else {
                 mSignals[currentIndex] = ImVec2(x, minSig); // Negative signal, Recovery
             }
-            mFilteredInput[currentIndex] = ImVec2(x, mInfluence * y + (1.0 - mInfluence) * mFilteredInput[previousIndex].y);
+            mFilteredInput[currentIndex] = ImVec2(x, mInfluence * y + (1.0f - mInfluence) * mFilteredInput[previousIndex].y);
         }
         else {
             mSignals[currentIndex] = ImVec2(x, midSig); // No signal, Entering/Exiting stroke
