@@ -266,6 +266,7 @@
     <Library Include="imgui\SDL\lib\SDL2test.lib" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="imgui.ini" />
     <None Include="imgui\SDL\include\SDL_config.h.cmake" />
     <None Include="imgui\SDL\include\SDL_config.h.in" />
     <None Include="imgui\SDL\include\SDL_config_macosx.h.orig" />
