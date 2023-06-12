@@ -36,7 +36,7 @@ SerialHandler::SerialHandler(const wchar_t* portNum) {
 		//error getting state
 		_printError();
 	}
-	dcbSerialParams.BaudRate = CBR_19200;
+	dcbSerialParams.BaudRate = CBR_115200;
 	dcbSerialParams.ByteSize = 8;
 	dcbSerialParams.StopBits = ONESTOPBIT;
 	dcbSerialParams.Parity = NOPARITY;
@@ -100,7 +100,7 @@ size_t SerialHandler::request() {
 	strcpy_s(requestBuffer, REQUEST);
 
 	DWORD dwBytesWritten = 0;
-	if (!WriteFile(serialHandle, requestBuffer, BUFFER_SIZE, &dwBytesWritten, NULL)) {
+	if (!WriteFile(serialHandle, requestBuffer, 1, &dwBytesWritten, NULL)) {
 		//error occurred. Report to user.
 		_printError();
 	}
@@ -118,7 +118,10 @@ SerialPacket SerialHandler::getData() {
 		>> parsedPacket.fsrOne 
 		>> parsedPacket.fsrTwo 
 		>> parsedPacket.timeSec 
-		>> parsedPacket.timeMs;
+		>> parsedPacket.timeMs
+		>> parsedPacket.accX
+		>> parsedPacket.accY
+		>> parsedPacket.accZ;
 
 	return parsedPacket;
 }

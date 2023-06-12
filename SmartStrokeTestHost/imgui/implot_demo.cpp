@@ -145,6 +145,8 @@ struct ScrollingBuffer {
     ImVector<ImVec2> mFilteredStdDevDwn;
     ImVector<ImVec2> mTrackedStrokes;
 
+    bool usePeakDetect = false;
+
     float minSig = 0.0f;
     float midSig = 0.5f;
     float maxSig = 1.0f;
@@ -258,7 +260,7 @@ struct ScrollingBuffer {
         float currentValue = mSignals[currentIndex].y;
         float prevValue = mSignals[previousIndex].y;
         bool isFallingEdge = (currentValue == midSig) && (prevValue != midSig);
-        if (isFallingEdge) {
+        if (isFallingEdge && usePeakDetect) {
             int fallingEdgeIndex = previousIndex;
             int risingEdgeIndex = 0;
             int indexToCheck = previousIndex;
@@ -1031,11 +1033,15 @@ void Demo_RealtimePlots() {
     static float t = 0;
     t = (float)data.timeSec + (float)data.timeMs/1000.f;
     float scale = 0.0002f;
+
+    sdata1.usePeakDetect = true;
+    sdata2.usePeakDetect = true;
+
     sdata1.AddPoint(t, data.fsrOne * scale);
     sdata2.AddPoint(t, data.fsrTwo * scale);
-    sdataX.AddPoint(t, data.fsrTwo * scale); // Update please
-    sdataY.AddPoint(t, data.fsrTwo * scale); // Update please
-    sdataZ.AddPoint(t, data.fsrTwo * scale); // Update please
+    sdataX.AddPoint(t, data.accX * scale); // Update please
+    sdataY.AddPoint(t, data.accY * scale); // Update please
+    sdataZ.AddPoint(t, data.accZ * scale); // Update please
 
     static float history = 10.0f;
     ImGui::SliderFloat("History",&history,1,30,"%.1f s");
@@ -1114,7 +1120,7 @@ void Demo_RealtimePlots() {
         ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
         ImPlot::PlotLine("X", &sdataX.Data[0].x, &sdataX.Data[0].y, sdataX.Data.size(), 0, sdataX.Offset, 2 * sizeof(float));
         ImPlot::PlotLine("Y", &sdataY.Data[0].x, &sdataY.Data[0].y, sdataY.Data.size(), 0, sdataY.Offset, 2 * sizeof(float));
-        ImPlot::PlotLine("Y", &sdataZ.Data[0].x, &sdataZ.Data[0].y, sdataZ.Data.size(), 0, sdataZ.Offset, 2 * sizeof(float));
+        ImPlot::PlotLine("Z", &sdataZ.Data[0].x, &sdataZ.Data[0].y, sdataZ.Data.size(), 0, sdataZ.Offset, 2 * sizeof(float));
         ImPlot::EndPlot();
     }
 
