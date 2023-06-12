@@ -4,6 +4,8 @@
 #include <sstream>
 
 #define BUFFER_SIZE 255
+// FOR WILLIAMS BOARD: BUFFER_SIZE_MULTIPLE_SENDS_ERROR will not make the board send multiple responses per request
+#define BUFFER_SIZE_MULTIPLE_SENDS_ERROR 2
 
 SerialHandler::SerialHandler() {
 }
@@ -36,7 +38,7 @@ SerialHandler::SerialHandler(const wchar_t* portNum) {
 		//error getting state
 		_printError();
 	}
-	dcbSerialParams.BaudRate = CBR_19200;
+	dcbSerialParams.BaudRate = CBR_115200;
 	dcbSerialParams.ByteSize = 8;
 	dcbSerialParams.StopBits = ONESTOPBIT;
 	dcbSerialParams.Parity = NOPARITY;
@@ -100,7 +102,9 @@ size_t SerialHandler::request() {
 	strcpy_s(requestBuffer, REQUEST);
 
 	DWORD dwBytesWritten = 0;
-	if (!WriteFile(serialHandle, requestBuffer, BUFFER_SIZE, &dwBytesWritten, NULL)) {
+
+	// FOR WILLIAMS BOARD: BUFFER_SIZE_MULTIPLE_SENDS_ERROR will not make the board send multiple responses per request
+	if (!WriteFile(serialHandle, requestBuffer, BUFFER_SIZE_MULTIPLE_SENDS_ERROR, &dwBytesWritten, NULL)) {
 		//error occurred. Report to user.
 		_printError();
 	}

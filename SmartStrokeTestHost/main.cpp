@@ -205,7 +205,7 @@ enum class DEMO_TYPE: int {
 };
 
 int main(int argn, char** argv) {
-    serialHandlerPtr = std::unique_ptr<SerialHandler>(new SerialHandler(L"10"));
+    serialHandlerPtr = std::unique_ptr<SerialHandler>(new SerialHandler(L"5"));
     DEMO_TYPE type = DEMO_TYPE::IMGUI;
     switch (type) {
     case DEMO_TYPE::DATA:
