@@ -989,8 +989,6 @@ void Demo_Images() {
 std::shared_ptr<SerialHandler> serialHandlerPtr;
 
 void Demo_RealtimePlots() {
-    ImGui::BulletText("Move your mouse to change the data!");
-    ImGui::BulletText("This example assumes 60 FPS. Higher FPS requires larger buffer size.");
     static ScrollingBuffer sdata1, sdata2;
     static RollingBuffer   rdata1, rdata2;
     ImVec2 mouse = ImGui::GetMousePos();
@@ -1008,12 +1006,45 @@ void Demo_RealtimePlots() {
     rdata1.Span = history;
     rdata2.Span = history;
 
+    static int Lag = sdata1.mLag;
+    ImGui::InputInt(" Lag", &sdata1.mLag);
+
+    static double Influence = sdata1.mInfluence;
+    ImGui::SliderFloat("Input Influence", &sdata1.mInfluence, 0.0f, 1.0f, "%.4f", ImGuiSliderFlags_AlwaysClamp);
+
+    static double Threshold = sdata1.mThreshold;
+    ImGui::SliderFloat("Input Threshold", &sdata1.mThreshold, 0.01f, 4.0f, "%.4f", ImGuiSliderFlags_AlwaysClamp);
+
+    static int e = 0;
+    ImGui::RadioButton("Short History", &e, 0); ImGui::SameLine();
+    ImGui::RadioButton("Long History", &e, 1);
+    static bool clicked = false;
+    if (ImGui::Button("Update")) {
+        clicked = true;
+    }
+
+    if (clicked)
+    {
+        if (e == 0) {
+            sdata1.mThreshold = 0.01;
+            sdata1.mInfluence = 3.5;
+            sdata1.mLag = 45;
+        }
+        if (e == 1) {
+            sdata1.mThreshold = 0.0275;
+            sdata1.mInfluence = 2.75;
+            sdata1.mLag = 225;
+        }
+        clicked = false;
+    }
+ 
+
     static ImPlotAxisFlags flags = ImPlotAxisFlags_NoTickLabels;
 
     if (ImPlot::BeginPlot("Raw Input", ImVec2(-1,150))) {
         ImPlot::SetupAxes(NULL, NULL, flags, flags);
         ImPlot::SetupAxisLimits(ImAxis_X1,t - history, t, ImGuiCond_Always);
-        ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
+        ImPlot::SetupAxisLimits(ImAxis_Y1,0,1.5);
         ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL,0.5f);
         ImPlot::PlotShaded("FSR One", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, 0, sdata1.Offset, 2 * sizeof(float));
         ImPlot::PlotLine("FSR Two", &sdata2.Data[0].x, &sdata2.Data[0].y, sdata2.Data.size(), 0, sdata2.Offset, 2*sizeof(float));
@@ -1027,10 +1058,11 @@ void Demo_RealtimePlots() {
         ImPlot::PlotLine("FSR Two", &rdata2.Data[0].x, &rdata2.Data[0].y, rdata2.Data.size(), 0, 0, 2 * sizeof(float));
         ImPlot::EndPlot();
     }*/
+    // z-score stuff
     if (ImPlot::BeginPlot("Robust peak detection algorithm (using z-scores)", ImVec2(-1, 150))) {
         ImPlot::SetupAxes(NULL, NULL, flags, flags);
         ImPlot::SetupAxisLimits(ImAxis_X1, t - history, t, ImGuiCond_Always);
-        ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 1);
+        ImPlot::SetupAxisLimits(ImAxis_Y1, -1.5, 1.5);
         ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
         ImPlot::PlotShaded("Raw FSR", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, 0, sdata1.Offset, 2 * sizeof(float));
         ImPlot::PlotLine("Detected Signals", &sdata1.mSignals[0].x, &sdata1.mSignals[0].y, sdata1.Data.size(), 0, sdata1.Offset, 2 * sizeof(float));
