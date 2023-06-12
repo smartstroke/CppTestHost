@@ -143,11 +143,11 @@ struct ScrollingBuffer {
     ImVector<ImVec2> mFilteredStdDev;
     ImVector<ImVec2> mFilteredStdDevUp;
     ImVector<ImVec2> mFilteredStdDevDwn;
+    ImVector<ImVec2> mTrackedStrokes;
 
     float minSig = 0.0f;
     float midSig = 0.5f;
     float maxSig = 1.0f;
-    int debugCount = 0;
 
     ScrollingBuffer(int max_size = 2000, int lag = 400, float threshold = 0.7f, float influence = 0.5f) :
     MaxSize(max_size),
